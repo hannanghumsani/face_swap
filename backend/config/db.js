@@ -12,7 +12,9 @@ const connectDB = async () => {
       client = new MongoClient(process.env.MONGO_URI);
       await client.connect();
       console.log("MongoDB Connected");
-      db = client.db(); // default DB from URI
+
+      // Use DB_NAME from env OR database from URI
+      db = client.db(process.env.DB_NAME);
     }
     return db;
   } catch (error) {
