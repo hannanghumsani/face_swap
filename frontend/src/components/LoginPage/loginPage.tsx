@@ -46,12 +46,12 @@ const LoginPageContainer: React.FC = () => {
       const resp = await loginUser(values);
 
       if (resp.status === 200) {
-        await router.push("/detail");
         setCookie("token", resp?.data.token, { maxAge: 60 * 60 * 24 * 7 });
         toast.success(resp?.data?.message || "Login successful!", {
           position: "top-right",
           autoClose: 1000,
         });
+        router.push("/detail");
       } else {
         throw new Error(resp?.data?.message || "Invalid credentials!");
       }
@@ -61,7 +61,7 @@ const LoginPageContainer: React.FC = () => {
         autoClose: 2000,
       });
     } finally {
-      setLoading(false);
+      // setLoading(false);
       actions.setSubmitting(false);
     }
   };

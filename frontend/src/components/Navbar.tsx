@@ -35,7 +35,7 @@ export default function Navbar() {
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         {/* Left - Home */}
         <Link
-          href="/"
+          href="/detail"
           className="text-xl font-semibold text-white hover:text-gray-300"
         >
           Home
