@@ -2,7 +2,6 @@ Server-Rendered Face Swap App
 This is a server-rendered web application built with Node.js, Express, and EJS. It features a form for user information and image uploads, which are processed by the LightX API for face swapping. The application then stores the user data and the final swapped image in a MongoDB Atlas database and displays them in a public gallery.
 
 Features
-Server-Side Rendering (SSR): The user interface is rendered on the server for fast initial page loads.
 
 Secure Input Handling: All user inputs are validated for correctness (e.g., email format, file size) and sanitized to prevent security vulnerabilities.
 
@@ -11,8 +10,6 @@ External API Integration: Uses the LightX API for the AI face-swap functionality
 Database Persistence: User records and image data are stored using the native MongoDB driver (no ORMs like Mongoose).
 
 Dynamic Gallery: A page dynamically lists all submissions, showing the original image, the swapped image, and a direct download link.
-
-Modern UI: The form and gallery have a clean, responsive design with a loading animation.
 
 Tech Stack
 Backend: Node.js, Express.js
