@@ -1,9 +1,11 @@
 const { getDb } = require("../models/database");
 const fs = require("fs").promises;
 const axios = require("axios");
-const FormData = require("form-data");
 const multer = require("multer");
+const path = require("path");
 
+// Use memoryStorage() instead of dest to handle files in memory.
+// This is crucial for deployment to platforms like Vercel.
 const upload = multer({ storage: multer.memoryStorage() });
 
 const LIGHTX_API_KEY = process.env.LIGHTX_API_KEY;
@@ -11,23 +13,22 @@ const LIGHTX_BASE_URL = "https://api.lightxeditor.com/external/api/v2";
 const LIGHTX_V1_BASE_URL = "https://api.lightxeditor.com/external/api/v1";
 
 /**
- * @param {string} filePath - .
- * @param {string} apiKey - .
- * @returns {Promise<string>} .
+ * Uploads an image to LightX using their presigned URL flow.
+ *
+ * @param {Buffer} fileBuffer - The image data as a buffer.
+ * @param {string} mimeType - The file's MIME type.
+ * @param {string} apiKey - The LightX API key.
+ * @returns {Promise<string>} The final image URL hosted by LightX.
  */
-
-async function uploadImageToLightX(filePath, apiKey) {
+async function uploadImageToLightX(fileBuffer, mimeType, apiKey) {
   try {
-    const fileContent = await fs.readFile(filePath);
-    const fileSize = (await fs.stat(filePath)).size;
-    const fileType = "image/jpeg"; //
-
+    const fileSize = fileBuffer.length;
     const presignedRes = await axios.post(
       `${LIGHTX_BASE_URL}/uploadImageUrl`,
       {
         uploadType: "imageUrl",
         size: fileSize,
-        contentType: fileType,
+        contentType: mimeType,
       },
       {
         headers: { "x-api-key": apiKey },
@@ -48,20 +49,13 @@ async function uploadImageToLightX(filePath, apiKey) {
     const imageUrl =
       responseData.imageUrl || responseData.image_url || responseData.outputUrl;
 
-    if (!uploadUrl) {
-      console.error("LightX API response missing upload URL:", responseData);
-      throw new Error("Failed to get upload URL from LightX API.");
-    }
-    if (!imageUrl) {
-      console.error(
-        "LightX API response missing final image URL:",
-        responseData
-      );
-      throw new Error("Failed to get final image URL from LightX API.");
+    if (!uploadUrl || !imageUrl) {
+      console.error("LightX API response missing required URLs:", responseData);
+      throw new Error("Failed to get required URLs from LightX API.");
     }
 
-    await axios.put(uploadUrl, fileContent, {
-      headers: { "Content-Type": fileType },
+    await axios.put(uploadUrl, fileBuffer, {
+      headers: { "Content-Type": mimeType },
     });
 
     return imageUrl;
@@ -73,16 +67,19 @@ async function uploadImageToLightX(filePath, apiKey) {
     throw new Error(`Failed to upload image to LightX: ${error.message}`);
   }
 }
+
 const getForm = (req, res) => {
   res.render("index", { errors: null, values: null });
 };
 
 /**
- * @param {string} orderId
- * @param {string} apiKey
- * @param {number} maxRetries
- * @param {number} interval
- * @returns {Promise<string>}
+ * Polls the order status of a face-swap job until it's complete.
+ *
+ * @param {string} orderId - The order ID from the face-swap initiation.
+ * @param {string} apiKey - The LightX API key.
+ * @param {number} maxRetries - Max polling attempts.
+ * @param {number} interval - Interval between polls in ms.
+ * @returns {Promise<string>} The output image URL.
  */
 async function pollOrderStatus(
   orderId,
@@ -155,12 +152,15 @@ const submitForm = async (req, res) => {
   let outputUrl = null;
 
   try {
+    // Pass file buffer and MIME type to the function
     const originalImageUrl = await uploadImageToLightX(
-      originalFile.path,
+      originalFile.buffer,
+      originalFile.mimetype,
       LIGHTX_API_KEY
     );
     const swapImageUrl = await uploadImageToLightX(
-      swapFile.path,
+      swapFile.buffer,
+      swapFile.mimetype,
       LIGHTX_API_KEY
     );
 
@@ -211,13 +211,6 @@ const submitForm = async (req, res) => {
       },
       values: req.body,
     });
-  } finally {
-    await fs
-      .unlink(originalFile.path)
-      .catch((err) => console.error("Error cleaning up original file:", err));
-    await fs
-      .unlink(swapFile.path)
-      .catch((err) => console.error("Error cleaning up swap file:", err));
   }
 };
 
