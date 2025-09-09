@@ -4,7 +4,7 @@ const axios = require("axios");
 const FormData = require("form-data");
 const multer = require("multer");
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({ storage: multer.memoryStorage() });
 
 const LIGHTX_API_KEY = process.env.LIGHTX_API_KEY;
 const LIGHTX_BASE_URL = "https://api.lightxeditor.com/external/api/v2";
