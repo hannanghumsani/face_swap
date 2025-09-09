@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Submissions</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>All Submissions</h1>
+      <div class="gallery">
+        <% submissions.forEach(submission => { %>
+        <div class="submission-card">
+          <h3><%= submission.name %></h3>
+          <p><%= submission.email %></p>
+          <p><%= submission.phone %></p>
+
+          <h4>Original Image</h4>
+          <img src="<%= submission.originalImage %>" alt="Original Image" />
+
+          <h4>Swapped Image</h4>
+          <img src="<%= submission.swappedImage %>" alt="Swapped Image" />
+
+          <a
+            href="/submissions/download/<%= submission._id %>"
+            class="download-link"
+            download
+          >
+            Download Swapped Photo
+          </a>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+  </body>
+</html>

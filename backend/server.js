@@ -1,24 +1,28 @@
 const express = require("express");
+const path = require("path");
+const ejs = require("ejs");
+const indexRouter = require("./routes/index");
+const submissionsRouter = require("./routes/submissions");
+const db = require("./models/database");
 require("dotenv").config();
-const connectDB = require("./config/db");
-const userRoutes = require("./route/userRoute");
-const cors = require("cors");
 
 const app = express();
-// connectDB();
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+db.connect();
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-  res.send("Express server is running!");
-});
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-app.use("/user", userRoutes);
+app.use("/", indexRouter);
+app.use("/submissions", submissionsRouter);
 
-const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 module.exports = app;
