@@ -137,11 +137,34 @@ async function pollOrderStatus(
 }
 
 const submitForm = async (req, res) => {
-  const { name, email, phone } = req.body;
+  const { name, email, phone, tc } = req.body;
+
+  // Validation for form fields
+  const errors = {};
+
+  if (!name || name.trim().length === 0) {
+    errors.name = "Name is required.";
+  }
+
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    errors.email = "A valid email is required.";
+  }
+
+  if (!phone || !/^\+?\d{10,15}$/.test(phone)) {
+    errors.phone = "A valid phone number is required (10-15 digits).";
+  }
+
+  if (!tc) {
+    errors.tc = "You must accept the Terms & Conditions.";
+  }
 
   if (!req.files || !req.files.originalFile || !req.files.swapFile) {
+    errors.general = "Both original and swap images are required.";
+  }
+
+  if (Object.keys(errors).length > 0) {
     return res.status(400).render("index", {
-      errors: { general: "Both original and swap images are required." },
+      errors,
       values: req.body,
     });
   }
@@ -204,11 +227,25 @@ const submitForm = async (req, res) => {
     res.redirect("/submissions");
   } catch (error) {
     console.error("Error processing form submission:", error.message);
+    let errorMessage =
+      "An error occurred during face swap processing. Please try again.";
+
+    // Specific error messages based on the type of error
+    if (error.message.includes("Failed to upload image to LightX")) {
+      errorMessage =
+        "Failed to upload images. Please ensure the files are valid images and try again.";
+    } else if (error.message.includes("Face swap failed")) {
+      errorMessage =
+        "Face swap processing failed. Please ensure the photos contain clear faces.";
+    } else if (error.message.includes("Max retries exceeded")) {
+      errorMessage =
+        "The face swap process took too long. Please try again later.";
+    } else if (error.message.includes("missing order ID")) {
+      errorMessage = "Unable to initiate face swap. Please try again.";
+    }
+
     res.status(500).render("index", {
-      errors: {
-        general:
-          "An error occurred during face swap processing. Please ensure the photos contain clear faces and try again.",
-      },
+      errors: { general: errorMessage },
       values: req.body,
     });
   }
